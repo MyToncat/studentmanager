@@ -6,7 +6,11 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import  javax.swing.JTextField;
 
-public class StudentManagement {
+import javax.swing.JOptionPane;
+import java.awt.event.ActionEvent;
+import  java.awt.event.ActionListener;
+
+public class StudentManagement implements ActionListener {
     private final long serivalVersionUID=1L;
 
     private JFrame mainFrame;
@@ -41,7 +45,9 @@ public class StudentManagement {
         addInput();
         addShowAll();
         addQuery();
+        setAction();//启动监听
         mainFrame.validate();
+
     }
     private void addInput(){
         top=new JPanel();
@@ -95,5 +101,107 @@ public class StudentManagement {
         mainFrame.add(bottom,BorderLayout.SOUTH);
 
     }
+    private void setAction(){
+        btnAdd.addActionListener(this);
+        btnShowAll.addActionListener(this);
+        btnSortAll.addActionListener(this);
+        btnQuery.addActionListener(this);
 
+    }
+    public void actionPerformed(ActionEvent e){
+        String inputText=e.getActionCommand();
+        if(inputText.equals("添加")){
+            addStudent();
+        }
+        else if (inputText.equals("排序")){
+            sortAll();
+        }else if(inputText.equals("提交")){
+            queryStudent();
+        }
+        else if(inputText.equals("显示")){
+            displayAll();
+        }else{
+            showError("error");
+        }
+
+    }
+    //-----------------------------------------
+    //---功能实现------
+    private void addStudent(){
+        String name;
+        int age;
+        double grade;
+        try{
+            name=textName.getText();
+            age=Integer.parseInt(textAge.getText());
+            grade=Double.parseDouble(textGrade.getText());
+        }catch (NumberFormatException e){
+            showError("输入有错误！");
+            return;
+        }
+        Student student=new Student(name,age,grade);
+        StudentDAO sd=new StudentDAO();
+        if(sd.insert(student)){
+            showMsg("添加成功！");
+           displayAll();
+        }else{
+            showError("添加错误！");
+        }
+    }
+
+    private void displayAll(){
+        StudentDAO sd=new StudentDAO();
+        //从数据库中获取信息
+        StudentClass xg=sd.getStudentClass();
+        //格式化显示
+        String content=DisplayUtils.display(xg.formatestudent());
+        //显示内容
+        areaShowAll.setText(content);
+
+    }
+    private void sortAll(){
+        StudentDAO sd=new StudentDAO();
+        //从数据库获取数据，
+        StudentClass xg=sd.getStudentClass();
+        //排序
+        xg.sort();
+        //格式化输出
+        String content=DisplayUtils.display(xg.formatestudent());
+        areaShowAll.setText(content);
+
+    }
+
+    private void queryStudent(){
+        //创建对象，从文本输入框取出名字
+        String name=textQuery.getText();
+        StudentDAO sd=new StudentDAO();
+        //
+        Student student=sd.getByName(name);
+        if(name!=null&&name.length()>0){
+            String cotent=showStudent(student);
+            areaQuery.setText(cotent);
+        }else{
+            showError("error!");
+        }
+    }
+    private String showStudent(Student student){
+        String result;
+        if(student!=null){
+            result="姓名"+student.getName()+"\t成绩"+student.getGrade();
+        }
+        else{
+            result="学生不存在！";
+        }
+       return result;
+    }
+    private void showError(String errorMsg){
+        String dialogTitle="学生成绩管理";
+        JOptionPane.showMessageDialog(mainFrame,errorMsg,dialogTitle,JOptionPane.WARNING_MESSAGE);
+
+    }
+    private void showMsg(String msg){
+        String dialogTitle="学生成绩管理";
+        JOptionPane.showMessageDialog(mainFrame,msg,dialogTitle,JOptionPane.INFORMATION_MESSAGE);
+
+    }
 }
